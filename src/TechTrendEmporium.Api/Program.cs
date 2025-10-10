@@ -213,6 +213,8 @@ if (builder.Configuration.GetValue<bool>("EF:ApplyMigrationsOnStartup"))
             await context.Database.MigrateAsync();
             logger.LogInformation("Database migrations applied successfully");
         }
+        
+        // Seed users after database is created/migrated
         await DbSeeder.SeedUsersAsync(context, logger);
     }
     catch (Exception ex)
@@ -229,47 +231,6 @@ if (builder.Configuration.GetValue<bool>("EF:ApplyMigrationsOnStartup"))
         {
             logger.LogWarning("Database setup failed in Development. The application will continue but may not function correctly.");
         }
-    }
-}
-
-// === Ensure system user exists ===
-if (builder.Configuration.GetValue<bool>("EnsureSystemUser", true))
-{
-    using var scope = app.Services.CreateScope();
-    try
-    {
-        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-
-        var systemUserId = new Guid("00000000-0000-0000-0000-000000000001");
-        var systemUser = await context.Users.FindAsync(systemUserId);
-
-        if (systemUser == null)
-        {
-            systemUser = new Data.Entities.User
-            {
-                Id = systemUserId,
-                Email = "system@techtrendemporium.com",
-                Username = "system",
-                PasswordHash = "SYSTEM_ACCOUNT_NOT_FOR_LOGIN",
-                Role = Data.Entities.Enums.Role.SuperAdmin,
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            context.Users.Add(systemUser);
-            await context.SaveChangesAsync();
-            logger.LogInformation("System user created successfully");
-        }
-        else
-        {
-            logger.LogInformation("System user already exists");
-        }
-    }
-    catch (Exception ex)
-    {
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while ensuring system user exists");
     }
 }
 

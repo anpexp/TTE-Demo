@@ -56,6 +56,15 @@ namespace Logica.Services
         {
             try
             {
+                // Validate that the createdBy user exists, fallback to system user if not
+                var systemUserId = new Guid("00000000-0000-0000-0000-000000000001");
+                var userExists = await _context.Users.AnyAsync(u => u.Id == createdBy);
+                if (!userExists)
+                {
+                    _logger.LogWarning("User {UserId} not found for product creation, using system user", createdBy);
+                    createdBy = systemUserId;
+                }
+
                 // Buscar o crear categoría
                 var category = await GetOrCreateCategoryAsync(productDto.Category, createdBy);
 
@@ -206,6 +215,15 @@ namespace Logica.Services
         {
             try
             {
+                // Validate that the createdBy user exists, fallback to system user if not
+                var systemUserId = new Guid("00000000-0000-0000-0000-000000000001");
+                var userExists = await _context.Users.AnyAsync(u => u.Id == createdBy);
+                if (!userExists)
+                {
+                    _logger.LogWarning("User {UserId} not found, using system user for import", createdBy);
+                    createdBy = systemUserId;
+                }
+
                 // Verificar si ya existe
                 var existingProduct = await _productRepository.GetByExternalIdAsync(
                     fakeStoreId.ToString(), ExternalSource.FakeStore);
@@ -239,6 +257,8 @@ namespace Logica.Services
                     State = ApprovalState.Approved, // Auto-aprobar productos importados
                     RatingAverage = (decimal)(fakeStoreProduct.Rating?.Rate ?? 0),
                     RatingCount = fakeStoreProduct.Rating?.Count ?? 0,
+                    InventoryTotal = 100, // Default inventory for imported products
+                    InventoryAvailable = 100,
                     CreatedAt = DateTime.UtcNow
                 };
 
@@ -344,6 +364,15 @@ namespace Logica.Services
 
         private async Task<Category> GetOrCreateCategoryAsync(string categoryName, Guid createdBy)
         {
+            // Validate that the createdBy user exists, fallback to system user if not
+            var systemUserId = new Guid("00000000-0000-0000-0000-000000000001");
+            var userExists = await _context.Users.AnyAsync(u => u.Id == createdBy);
+            if (!userExists)
+            {
+                _logger.LogWarning("User {UserId} not found for category creation, using system user", createdBy);
+                createdBy = systemUserId;
+            }
+
             var existing = await _context.Categories
                 .FirstOrDefaultAsync(c => c.Name.ToLower() == categoryName.ToLower());
 
@@ -354,11 +383,11 @@ namespace Logica.Services
             {
                 Name = categoryName,
                 Slug = GenerateSlug(categoryName),
-                State = ApprovalState.PendingApproval, // Changed to pending
+                State = ApprovalState.Approved, // Auto-approve categories from FakeStore
                 CreatedBy = createdBy,
-                ApprovedBy = null, // Leave null until approved
+                ApprovedBy = createdBy, // Auto-approve with same user
                 CreatedAt = DateTime.UtcNow,
-                ApprovedAt = null // Leave null until approved
+                ApprovedAt = DateTime.UtcNow // Auto-approve
             };
 
             _context.Categories.Add(category);

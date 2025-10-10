@@ -660,6 +660,7 @@ namespace Data.Migrations
                     b.ToTable("WishlistItems");
                 });
 
+            // Foreign Key Relationships
             modelBuilder.Entity("Data.Entities.ApprovalJob", b =>
                 {
                     b.HasOne("Data.Entities.User", "Requester")
@@ -827,6 +828,7 @@ namespace Data.Migrations
                     b.Navigation("Wishlist");
                 });
 
+            // Navigation Properties
             modelBuilder.Entity("Data.Entities.Cart", b =>
                 {
                     b.Navigation("CartItems");

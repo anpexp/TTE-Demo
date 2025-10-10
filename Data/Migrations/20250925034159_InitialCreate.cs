@@ -6,11 +6,28 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Data.Migrations
 {
     /// <inheritdoc />
+    /// <summary>
+    /// INITIAL DATABASE CREATION: Complete Base Structure
+    /// Creates the entire initial database structure including:
+    /// - User management, sessions and authentication
+    /// - Product catalog and categories
+    /// - Reviews and ratings system
+    /// - Shopping cart and wishlist functionality
+    /// - Coupon and discount system
+    /// - Approval workflow and audit trails
+    /// - External imports and notifications
+    /// - Performance indexes and integrity constraints
+    /// </summary>
     public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            // =====================================
+            // INDEPENDENT TABLES (No Foreign Keys)
+            // =====================================
+
+            // Discount coupons table
             migrationBuilder.CreateTable(
                 name: "Coupons",
                 columns: table => new
@@ -30,6 +47,7 @@ namespace Data.Migrations
                     table.CheckConstraint("CK_Coupon_DiscountPercentage", "[DiscountPercentage] >= 0 AND [DiscountPercentage] <= 100");
                 });
 
+            // External import jobs tracking
             migrationBuilder.CreateTable(
                 name: "ExternalImportJobs",
                 columns: table => new
@@ -48,6 +66,7 @@ namespace Data.Migrations
                     table.PrimaryKey("PK_ExternalImportJobs", x => x.Id);
                 });
 
+            // External source mappings
             migrationBuilder.CreateTable(
                 name: "ExternalMappings",
                 columns: table => new
@@ -65,6 +84,7 @@ namespace Data.Migrations
                     table.PrimaryKey("PK_ExternalMappings", x => x.Id);
                 });
 
+            // System notifications
             migrationBuilder.CreateTable(
                 name: "Notifications",
                 columns: table => new
@@ -83,12 +103,16 @@ namespace Data.Migrations
                     table.PrimaryKey("PK_Notifications", x => x.Id);
                 });
 
+            // =====================================
+            // USERS TABLE (Base for all relationships)
+            // =====================================
             migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Email = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false), // Set to 100 from the start
                     Username = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     PasswordHash = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
                     Role = table.Column<string>(type: "nvarchar(max)", nullable: false),
@@ -102,6 +126,11 @@ namespace Data.Migrations
                     table.PrimaryKey("PK_Users", x => x.Id);
                 });
 
+            // =====================================
+            // USER-DEPENDENT TABLES
+            // =====================================
+
+            // Approval workflow jobs
             migrationBuilder.CreateTable(
                 name: "ApprovalJobs",
                 columns: table => new
@@ -134,6 +163,7 @@ namespace Data.Migrations
                         onDelete: ReferentialAction.Restrict);
                 });
 
+            // Audit trail logs
             migrationBuilder.CreateTable(
                 name: "AuditLogs",
                 columns: table => new
@@ -156,6 +186,7 @@ namespace Data.Migrations
                         principalColumn: "Id");
                 });
 
+            // Shopping carts
             migrationBuilder.CreateTable(
                 name: "Carts",
                 columns: table => new
@@ -187,6 +218,7 @@ namespace Data.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            // Product categories
             migrationBuilder.CreateTable(
                 name: "Categories",
                 columns: table => new
@@ -218,6 +250,7 @@ namespace Data.Migrations
                         onDelete: ReferentialAction.Restrict);
                 });
 
+            // User sessions
             migrationBuilder.CreateTable(
                 name: "Sessions",
                 columns: table => new
@@ -242,6 +275,7 @@ namespace Data.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            // User wishlists
             migrationBuilder.CreateTable(
                 name: "Wishlists",
                 columns: table => new
@@ -261,6 +295,11 @@ namespace Data.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            // =====================================
+            // CATEGORY-DEPENDENT TABLES
+            // =====================================
+
+            // Products catalog
             migrationBuilder.CreateTable(
                 name: "Products",
                 columns: table => new
@@ -309,6 +348,11 @@ namespace Data.Migrations
                         onDelete: ReferentialAction.Restrict);
                 });
 
+            // =====================================
+            // PRODUCT-DEPENDENT TABLES
+            // =====================================
+
+            // Cart items
             migrationBuilder.CreateTable(
                 name: "CartItems",
                 columns: table => new
@@ -342,6 +386,7 @@ namespace Data.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            // Product reviews and ratings
             migrationBuilder.CreateTable(
                 name: "Reviews",
                 columns: table => new
@@ -371,6 +416,7 @@ namespace Data.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            // Wishlist items
             migrationBuilder.CreateTable(
                 name: "WishlistItems",
                 columns: table => new
@@ -397,6 +443,11 @@ namespace Data.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            // =====================================
+            // PERFORMANCE INDEXES
+            // =====================================
+
+            // Approval Jobs indexes
             migrationBuilder.CreateIndex(
                 name: "IX_ApprovalJobs_RequestedBy",
                 table: "ApprovalJobs",
@@ -417,11 +468,13 @@ namespace Data.Migrations
                 table: "ApprovalJobs",
                 columns: new[] { "Type", "Status" });
 
+            // Audit Logs indexes
             migrationBuilder.CreateIndex(
                 name: "IX_AuditLogs_UserId",
                 table: "AuditLogs",
                 column: "UserId");
 
+            // Cart Items indexes
             migrationBuilder.CreateIndex(
                 name: "IX_CartItems_CartId",
                 table: "CartItems",
@@ -438,6 +491,7 @@ namespace Data.Migrations
                 table: "CartItems",
                 column: "ProductId");
 
+            // Carts indexes
             migrationBuilder.CreateIndex(
                 name: "IX_Carts_AppliedCouponId",
                 table: "Carts",
@@ -448,6 +502,7 @@ namespace Data.Migrations
                 table: "Carts",
                 columns: new[] { "UserId", "Status" });
 
+            // Categories indexes
             migrationBuilder.CreateIndex(
                 name: "IX_Categories_ApprovedBy",
                 table: "Categories",
@@ -470,12 +525,14 @@ namespace Data.Migrations
                 column: "Slug",
                 unique: true);
 
+            // Coupons indexes
             migrationBuilder.CreateIndex(
                 name: "IX_Coupons_Code",
                 table: "Coupons",
                 column: "Code",
                 unique: true);
 
+            // External Mappings indexes
             migrationBuilder.CreateIndex(
                 name: "IX_ExternalMappings_Source_SourceType_SourceId",
                 table: "ExternalMappings",
@@ -487,6 +544,7 @@ namespace Data.Migrations
                 table: "ExternalMappings",
                 column: "SourceId");
 
+            // Products indexes
             migrationBuilder.CreateIndex(
                 name: "IX_Products_ApprovedBy",
                 table: "Products",
@@ -512,6 +570,7 @@ namespace Data.Migrations
                 table: "Products",
                 column: "Title");
 
+            // Reviews indexes
             migrationBuilder.CreateIndex(
                 name: "IX_Reviews_ProductId",
                 table: "Reviews",
@@ -527,11 +586,13 @@ namespace Data.Migrations
                 table: "Reviews",
                 column: "UserId");
 
+            // Sessions indexes
             migrationBuilder.CreateIndex(
                 name: "IX_Sessions_UserId",
                 table: "Sessions",
                 column: "UserId");
 
+            // Users indexes
             migrationBuilder.CreateIndex(
                 name: "IX_Users_Email",
                 table: "Users",
@@ -544,6 +605,7 @@ namespace Data.Migrations
                 column: "Username",
                 unique: true);
 
+            // Wishlist Items indexes
             migrationBuilder.CreateIndex(
                 name: "IX_WishlistItems_ProductId",
                 table: "WishlistItems",
@@ -560,6 +622,7 @@ namespace Data.Migrations
                 columns: new[] { "WishlistId", "ProductId" },
                 unique: true);
 
+            // Wishlists indexes
             migrationBuilder.CreateIndex(
                 name: "IX_Wishlists_UserId",
                 table: "Wishlists",

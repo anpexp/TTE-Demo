@@ -294,7 +294,10 @@ namespace TechTrendEmporium.Api.Controllers
         {
             try
             {
-                var createdBy = GetCurrentUserId();
+                var currentUserId = GetCurrentUserId();
+                // Use system user if no authenticated user
+                var createdBy = currentUserId == Guid.Empty ? new Guid("00000000-0000-0000-0000-000000000001") : currentUserId;
+                
                 var importedCount = await _productService.SyncAllFromFakeStoreAsync(createdBy);
 
                 return Ok(new
@@ -317,7 +320,10 @@ namespace TechTrendEmporium.Api.Controllers
         {
             try
             {
-                var createdBy = GetCurrentUserId();
+                var currentUserId = GetCurrentUserId();
+                // Use system user if no authenticated user
+                var createdBy = currentUserId == Guid.Empty ? new Guid("00000000-0000-0000-0000-000000000001") : currentUserId;
+                
                 var product = await _productService.ImportProductFromFakeStoreAsync(fakeStoreId, createdBy);
 
                 if (product == null)
