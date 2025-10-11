@@ -3,7 +3,8 @@ using Data.Entities.Enums;
 using External.FakeStore;
 using Logica.Interfaces;
 using Logica.Mappers;
-using Logica.Models.Category;
+using Logica.Models.Category.Requests;
+using Logica.Models.Category.Responses;
 
 namespace Logica.Services
 {
@@ -51,17 +52,17 @@ namespace Logica.Services
 
         public async Task<CategoryDto> CreateCategoryAsync(CategoryCreateDto categoryDto, Guid createdBy)
         {
-            // Validaciones de negocio
+            // Business validations
             if (await _categoryRepository.ExistsByNameAsync(categoryDto.Name))
-                throw new InvalidOperationException("Ya existe una categoría con ese nombre");
+                throw new InvalidOperationException("A category with that name already exists");
 
             if (await _categoryRepository.ExistsBySlugAsync(categoryDto.Slug))
-                throw new InvalidOperationException("Ya existe una categoría con ese slug");
+                throw new InvalidOperationException("A category with that slug already exists");
 
-            // Validar que el usuario existe
+            // Validate that user exists
             var user = await _userService.GetUserByIdAsync(createdBy);
             if (user == null)
-                throw new InvalidOperationException("Usuario no encontrado");
+                throw new InvalidOperationException("User not found");
 
             var category = categoryDto.ToCategory();
             category.CreatedBy = createdBy;
@@ -77,14 +78,14 @@ namespace Logica.Services
             if (category == null)
                 return null;
 
-            // Validaciones de negocio
+            // Business validations
             if (!string.IsNullOrWhiteSpace(categoryDto.Name) &&
                 await _categoryRepository.ExistsByNameAsync(categoryDto.Name, id))
-                throw new InvalidOperationException("Ya existe una categoría con ese nombre");
+                throw new InvalidOperationException("A category with that name already exists");
 
             if (!string.IsNullOrWhiteSpace(categoryDto.Slug) &&
                 await _categoryRepository.ExistsBySlugAsync(categoryDto.Slug, id))
-                throw new InvalidOperationException("Ya existe una categoría con ese slug");
+                throw new InvalidOperationException("A category with that slug already exists");
 
             category.UpdateCategory(categoryDto);
             var updatedCategory = await _categoryRepository.UpdateAsync(category);
@@ -94,6 +95,11 @@ namespace Logica.Services
         public async Task<bool> DeleteCategoryAsync(Guid id)
         {
             return await _categoryRepository.DeleteAsync(id);
+        }
+
+        public async Task<bool> DeactivateCategoryAsync(Guid id)
+        {
+            return await _categoryRepository.DeactivateAsync(id);
         }
 
         #endregion
@@ -118,10 +124,10 @@ namespace Logica.Services
 
         public async Task<bool> ApproveCategoryAsync(Guid id, Guid approvedBy)
         {
-            // Validar que el usuario aprobador existe
+            // Validate that approver user exists
             var user = await _userService.GetUserByIdAsync(approvedBy);
             if (user == null)
-                throw new InvalidOperationException("Usuario aprobador no encontrado");
+                throw new InvalidOperationException("Approver user not found");
 
             return await _categoryRepository.ApproveAsync(id, approvedBy);
         }
@@ -147,10 +153,10 @@ namespace Logica.Services
 
             foreach (var categoryName in fakeStoreCategories)
             {
-                // Crear slug a partir del nombre
+                // Create slug from name
                 var slug = GenerateSlug(categoryName);
 
-                // Verificar si ya existe
+                // Check if already exists
                 if (await _categoryRepository.ExistsBySlugAsync(slug))
                     continue;
 
@@ -167,7 +173,7 @@ namespace Logica.Services
                 }
                 catch (Exception)
                 {
-                    // Continuar con la siguiente categoría si hay error
+                    // Continue with next category if there's an error
                     continue;
                 }
             }

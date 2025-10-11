@@ -1,5 +1,6 @@
 using Data.Entities;
-using Logica.Models.Category;
+using Logica.Models.Category.Requests;
+using Logica.Models.Category.Responses;
 
 namespace Logica.Mappers
 {

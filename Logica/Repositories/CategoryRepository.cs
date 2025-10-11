@@ -117,7 +117,15 @@ namespace Logica.Repositories
         public async Task<bool> ApproveAsync(Guid id, Guid approvedBy)
         {
             var category = await _context.Categories.FindAsync(id);
-            if (category == null || category.State != ApprovalState.PendingApproval)
+            if (category == null)
+                return false;
+
+            // Check if category is already approved
+            if (category.State == ApprovalState.Approved)
+                throw new InvalidOperationException("Category is already approved.");
+
+            // Only allow approval from PendingApproval state
+            if (category.State != ApprovalState.PendingApproval)
                 return false;
 
             category.State = ApprovalState.Approved;
@@ -160,6 +168,27 @@ namespace Logica.Repositories
         public async Task<bool> ExistsBySlugAsync(string slug, Guid excludeId)
         {
             return await _context.Categories.AnyAsync(c => c.Slug.ToLower() == slug.ToLower() && c.Id != excludeId);
+        }
+
+        public async Task<bool> DeactivateAsync(Guid id)
+        {
+            var category = await _context.Categories.FindAsync(id);
+            if (category == null)
+                return false;
+
+            // Check if category has products
+            var hasProducts = await _context.Products.AnyAsync(p => p.CategoryId == id && p.State == ApprovalState.Approved);
+            if (hasProducts)
+                throw new InvalidOperationException("Cannot deactivate a category that has approved products.");
+            
+            if (category.State == ApprovalState.Declined)
+                throw new InvalidOperationException("Category is already deactivated.");
+
+            category.State = ApprovalState.Declined;
+            category.UpdatedAt = DateTime.UtcNow;
+            _context.Categories.Update(category);
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }

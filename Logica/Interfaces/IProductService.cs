@@ -12,6 +12,7 @@ namespace Logica.Interfaces
         Task<ProductDto?> UpdateProductAsync(Guid id, ProductUpdateDto productDto);
         Task<bool> DeleteProductAsync(Guid id);
         Task<IEnumerable<ProductDto>> SearchProductsAsync(string searchTerm);
+        Task<IEnumerable<ProductDto>> GetProductsByCategoryIdAsync(Guid categoryId);
         
         // FakeStore API Operations (externos)
         Task<IEnumerable<ProductDto>> GetProductsFromFakeStoreAsync();

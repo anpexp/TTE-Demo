@@ -1,4 +1,4 @@
-﻿namespace Logica.Models
+namespace Logica.Models.Products
 {
     public enum ProductSortBy { Title, Price, Rating }
     public enum SortDirection { Asc, Desc }
@@ -9,7 +9,7 @@
         public string? Title { get; set; }
         public decimal? Price { get; set; }
 
-        // Paginación
+        // Paginaci�n
         public int Page { get; set; } = 1;        // 1-based
         public int PageSize { get; set; } = 12;
 

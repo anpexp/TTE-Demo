@@ -33,7 +33,7 @@ namespace TechTrendEmporium.Api.Controllers
             try
             {
                 var userId = GetCurrentUserId();
-                _logger.LogInformation("?? Getting carts for user {UserId}", userId);
+                _logger.LogInformation("Getting carts for user {UserId}", userId);
                 
                 var carts = await _cartService.GetCartsByUserIdAsync(userId);
                 return Ok(carts);
@@ -55,7 +55,7 @@ namespace TechTrendEmporium.Api.Controllers
             try
             {
                 var userId = GetCurrentUserId();
-                _logger.LogInformation("?? Getting active cart for user {UserId}", userId);
+                _logger.LogInformation("Getting active cart for user {UserId}", userId);
                 
                 var cart = await _cartService.GetActiveCartByUserIdAsync(userId);
                 if (cart == null)
@@ -84,19 +84,19 @@ namespace TechTrendEmporium.Api.Controllers
             try
             {
                 // Debug logging para ver qué se está recibiendo
-                _logger.LogInformation("?? Received request: {Request}", System.Text.Json.JsonSerializer.Serialize(request));
+                _logger.LogInformation("Received request: {Request}", System.Text.Json.JsonSerializer.Serialize(request));
                 
                 // Validar que el request no sea null
                 if (request == null)
                 {
-                    _logger.LogWarning("? Request is null");
+                    _logger.LogWarning("Request is null");
                     return BadRequest("Request body is required");
                 }
 
                 // Validar ModelState
                 if (!ModelState.IsValid)
                 {
-                    _logger.LogWarning("? ModelState is invalid: {Errors}", 
+                    _logger.LogWarning("ModelState is invalid: {Errors}", 
                         string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
                     return BadRequest(ModelState);
                 }
@@ -113,7 +113,7 @@ namespace TechTrendEmporium.Api.Controllers
                 }
 
                 var userId = GetCurrentUserId();
-                _logger.LogInformation("? User {UserId} adding item {ProductId} quantity {Quantity}", 
+                _logger.LogInformation("User {UserId} adding item {ProductId} quantity {Quantity}", 
                     userId, request.ProductId, request.Quantity);
                 
                 var cart = await _cartService.AddItemToUserCartAsync(userId, request);
@@ -125,12 +125,12 @@ namespace TechTrendEmporium.Api.Controllers
             }
             catch (InvalidOperationException ex)
             {
-                _logger.LogWarning("?? Business logic error: {Message}", ex.Message);
+                _logger.LogWarning("Business logic error: {Message}", ex.Message);
                 return BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "?? Error adding item to cart");
+                _logger.LogError(ex, "Error adding item to cart");
                 return StatusCode(500, "Internal server error");
             }
         }
@@ -141,7 +141,7 @@ namespace TechTrendEmporium.Api.Controllers
             try
             {
                 var userId = GetCurrentUserId();
-                _logger.LogInformation("?? User {UserId} updating item {ProductId} to quantity {Quantity}", 
+                _logger.LogInformation("User {UserId} updating item {ProductId} to quantity {Quantity}", 
                     userId, request.ProductId, request.Quantity);
                 
                 var cart = await _cartService.UpdateItemInUserCartAsync(userId, request);
@@ -168,7 +168,7 @@ namespace TechTrendEmporium.Api.Controllers
             try
             {
                 var userId = GetCurrentUserId();
-                _logger.LogInformation("??? User {UserId} removing item {ProductId}", userId, productId);
+                _logger.LogInformation("User {UserId} removing item {ProductId}", userId, productId);
                 
                 var cart = await _cartService.RemoveItemFromUserCartAsync(userId, productId);
                 return Ok(cart);
@@ -194,7 +194,7 @@ namespace TechTrendEmporium.Api.Controllers
             try
             {
                 var userId = GetCurrentUserId();
-                _logger.LogInformation("?? User {UserId} checking out cart", userId);
+                _logger.LogInformation("User {UserId} checking out cart", userId);
                 
                 var cart = await _cartService.CheckoutUserCartAsync(userId);
                 return Ok(cart);
@@ -220,7 +220,7 @@ namespace TechTrendEmporium.Api.Controllers
             try
             {
                 var userId = GetCurrentUserId();
-                _logger.LogInformation("?? User {UserId} clearing cart", userId);
+                _logger.LogInformation("User {UserId} clearing cart", userId);
                 
                 var cart = await _cartService.ClearUserCartAsync(userId);
                 return Ok(cart);
@@ -236,96 +236,24 @@ namespace TechTrendEmporium.Api.Controllers
             }
         }
 
-        // === OPERACIONES ADMINISTRATIVAS (SOLO ADMINS) ===
-
-        [HttpGet("admin/all")]
-        [Authorize(Roles = "SuperAdmin")] // Solo administradores
-        public async Task<ActionResult<IEnumerable<CartFullDetailsDto>>> GetAllCartsForAdmin()
+        [HttpGet("inventory-warnings")]
+        public async Task<ActionResult<IEnumerable<string>>> GetInventoryWarnings()
         {
             try
             {
-                _logger.LogInformation("????? Admin getting all carts");
-                var carts = await _cartService.GetAllCartsFullDetailsAsync();
-                return Ok(carts);
+                var userId = GetCurrentUserId();
+                _logger.LogInformation("Getting inventory warnings for user {UserId}", userId);
+                
+                var warnings = await _cartService.GetInventoryWarningsAsync(userId);
+                return Ok(warnings);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized("Invalid user token");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting all carts for admin");
-                return StatusCode(500, "Internal server error");
-            }
-        }
-
-        [HttpGet("admin/dashboard")]
-        [Authorize(Roles = "SuperAdmin")] // Solo administradores
-        public async Task<ActionResult<CartsDashboardSummaryDto>> GetAdminDashboard()
-        {
-            try
-            {
-                _logger.LogInformation("?? Admin getting dashboard summary");
-                var summary = await _cartService.GetCartsDashboardSummaryAsync();
-                return Ok(summary);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting dashboard");
-                return StatusCode(500, "Internal server error");
-            }
-        }
-
-        [HttpGet("admin/user/{userId:guid}")]
-        [Authorize(Roles = "SuperAdmin")] // Solo administradores
-        public async Task<ActionResult<IEnumerable<CartFullDetailsDto>>> GetUserCartsForAdmin(Guid userId)
-        {
-            try
-            {
-                _logger.LogInformation("????? Admin getting carts for user {UserId}", userId);
-                var carts = await _cartService.GetCartsByUserFullDetailsAsync(userId);
-                return Ok(carts);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting user carts for admin");
-                return StatusCode(500, "Internal server error");
-            }
-        }
-
-
-        [HttpGet("admin/fakestore")]
-        [Authorize(Roles = "SuperAdmin")]
-        public async Task<ActionResult<IEnumerable<CartDto>>> GetCartsFromFakeStore()
-        {
-            try
-            {
-                var carts = await _cartService.GetCartsFromFakeStoreAsync();
-                return Ok(carts);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting carts from FakeStore");
-                return StatusCode(500, "Internal server error");
-            }
-        }
-
-        [HttpPost("admin/sync-from-fakestore")]
-        [Authorize(Roles = "SuperAdmin")]
-        public async Task<ActionResult<object>> SyncFromFakeStore()
-        {
-            try
-            {
-                var currentUserId = GetCurrentUserId();
-                var result = await _cartService.SyncAllCartsFromFakeStoreAsync(currentUserId);
-                return Ok(new
-                {
-                    Message = "Synchronization completed",
-                    SuccessfulCarts = result.CartsSuccessful,
-                    FailedCarts = result.CartsFailed,
-                    TotalProcessed = result.TotalCartsProcessed,
-                    Timestamp = DateTime.UtcNow
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error syncing from FakeStore");
+                _logger.LogError(ex, "Error getting inventory warnings");
                 return StatusCode(500, "Internal server error");
             }
         }
@@ -338,7 +266,7 @@ namespace TechTrendEmporium.Api.Controllers
         {
             try
             {
-                _logger.LogInformation("?? TEST: Getting active cart for user {UserId}", userId);
+                _logger.LogInformation("TEST: Getting active cart for user {UserId}", userId);
                 
                 var cart = await _cartService.GetActiveCartByUserIdAsync(userId);
                 if (cart == null)
@@ -361,7 +289,7 @@ namespace TechTrendEmporium.Api.Controllers
         {
             try
             {
-                _logger.LogInformation("?? TEST: User {UserId} adding item {ProductId}", userId, request.ProductId);
+                _logger.LogInformation("TEST: User {UserId} adding item {ProductId}", userId, request.ProductId);
                 
                 var cart = await _cartService.AddItemToUserCartAsync(userId, request);
                 return Ok(cart);
@@ -383,7 +311,7 @@ namespace TechTrendEmporium.Api.Controllers
         {
             try
             {
-                _logger.LogInformation("?? TEST: User {UserId} checking out", userId);
+                _logger.LogInformation("TEST: User {UserId} checking out", userId);
                 
                 var cart = await _cartService.CheckoutUserCartAsync(userId);
                 return Ok(cart);
@@ -406,7 +334,7 @@ namespace TechTrendEmporium.Api.Controllers
             try
             {
                 var systemUserId = new Guid("00000000-0000-0000-0000-000000000001");
-                _logger.LogInformation("?? TEST: Getting system user cart");
+                _logger.LogInformation("TEST: Getting system user cart");
                 
                 var cart = await _cartService.GetActiveCartByUserIdAsync(systemUserId);
                 if (cart == null)
@@ -423,58 +351,13 @@ namespace TechTrendEmporium.Api.Controllers
             }
         }
 
-        [HttpPost("admin/restore-inventory/{cartId:guid}")]
-        [Authorize(Roles = "SuperAdmin")]
-        public async Task<ActionResult> RestoreInventoryForCart(Guid cartId)
-        {
-            try
-            {
-                _logger.LogInformation("????? Admin restoring inventory for cart {CartId}", cartId);
-                await _cartService.RestoreInventoryAsync(cartId);
-                return Ok(new { message = "Inventory restored successfully", cartId });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error restoring inventory for cart");
-                return StatusCode(500, "Internal server error");
-            }
-        }
-
-        // === MÉTODOS HELPER ===
-
-        private Guid GetCurrentUserId()
-        {
-            // Intentar obtener el ID del usuario desde el token JWT
-            var userIdClaim = User.FindFirst("sub")?.Value ??
-                             User.FindFirst("userId")?.Value ??
-                             User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
-                             User.FindFirst("id")?.Value;
-
-            if (Guid.TryParse(userIdClaim, out var userId))
-            {
-                return userId;
-            }
-
-            // Si estamos en desarrollo y no hay token válido, usar usuario de sistema
-            if (User.Identity?.Name == "system" || User.Identity?.AuthenticationType == "Test")
-            {
-                _logger.LogWarning("Using system user for development/testing");
-                return new Guid("00000000-0000-0000-0000-000000000001");
-            }
-
-            _logger.LogError("No valid user ID found in token. Claims: {Claims}", 
-                string.Join(", ", User.Claims.Select(c => $"{c.Type}={c.Value}")));
-            
-            throw new UnauthorizedAccessException("Invalid user token - no user ID found");
-        }
-
         [HttpPost("test/validate-request")]
         [AllowAnonymous] // Para testing sin auth
         public async Task<ActionResult> ValidateAddItemRequest([FromBody] AddItemToCartRequest request)
         {
             try
             {
-                _logger.LogInformation("?? TEST: Validating request format");
+                _logger.LogInformation("TEST: Validating request format");
                 _logger.LogInformation("Raw request: {Request}", 
                     System.Text.Json.JsonSerializer.Serialize(request ?? new AddItemToCartRequest()));
                 
@@ -529,7 +412,7 @@ namespace TechTrendEmporium.Api.Controllers
         {
             try
             {
-                _logger.LogInformation("?? STRESS TEST: Multiple concurrent add-item requests for user {UserId}", userId);
+                _logger.LogInformation("STRESS TEST: Multiple concurrent add-item requests for user {UserId}", userId);
                 
                 // Simular múltiples requests concurrentes
                 var tasks = new List<Task<CartDto>>();
@@ -567,7 +450,7 @@ namespace TechTrendEmporium.Api.Controllers
         {
             try
             {
-                _logger.LogInformation("?? TEST: User {UserId} updating item {ProductId} to quantity {Quantity}", 
+                _logger.LogInformation("TEST: User {UserId} updating item {ProductId} to quantity {Quantity}", 
                     userId, request.ProductId, request.Quantity);
                 
                 var cart = await _cartService.UpdateItemInUserCartAsync(userId, request);
@@ -590,7 +473,7 @@ namespace TechTrendEmporium.Api.Controllers
         {
             try
             {
-                _logger.LogInformation("?? TEST: User {UserId} removing item {ProductId}", userId, productId);
+                _logger.LogInformation("TEST: User {UserId} removing item {ProductId}", userId, productId);
                 
                 var cart = await _cartService.RemoveItemFromUserCartAsync(userId, productId);
                 return Ok(cart);
@@ -602,28 +485,6 @@ namespace TechTrendEmporium.Api.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in test remove item");
-                return StatusCode(500, "Internal server error");
-            }
-        }
-
-        [HttpGet("inventory-warnings")]
-        public async Task<ActionResult<IEnumerable<string>>> GetInventoryWarnings()
-        {
-            try
-            {
-                var userId = GetCurrentUserId();
-                _logger.LogInformation("?? Getting inventory warnings for user {UserId}", userId);
-                
-                var warnings = await _cartService.GetInventoryWarningsAsync(userId);
-                return Ok(warnings);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Unauthorized("Invalid user token");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting inventory warnings");
                 return StatusCode(500, "Internal server error");
             }
         }

@@ -3,7 +3,8 @@ using Data.Entities;
 using External.FakeStore.Models;
 using Logica.Interfaces;
 using Logica.Mappers;
-using Logica.Models;
+using Logica.Models.Auth.Create;
+using Logica.Models.User;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 

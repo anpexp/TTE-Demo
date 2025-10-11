@@ -1,13 +1,15 @@
 using Data.Entities;
 using Data.Entities.Enums;
 using Logica.Interfaces;
-using Logica.Models;
 using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using System.IdentityModel.Tokens.Jwt;
 using BCrypt.Net;
 using Microsoft.Extensions.Logging;
+using Logica.Models.Auth.Create;
+using Logica.Models.Auth.Login;
+using Logica.Models.Auth.Reponse;
 
 namespace Logica.Services
 {
@@ -31,14 +33,14 @@ namespace Logica.Services
                 // Validate input
                 if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
                 {
-                    return (null, "Todos los campos son requeridos.");
+                    return (null, "All fields are required.");
                 }
 
                 // Check if user already exists
                 if (await _userRepository.EmailExistsAsync(request.Email) || await _userRepository.UsernameExistsAsync(request.Username))
                 {
-                    _logger.LogWarning("Intento de registro con email o nombre de usuario existente: {Email}/{Username}", request.Email, request.Username);
-                    return (null, "El email o nombre de usuario ya existe.");
+                    _logger.LogWarning("Registration attempt with existing email or username: {Email}/{Username}", request.Email, request.Username);
+                    return (null, "Email or username already exists.");
                 }
 
                 var user = new User
@@ -53,7 +55,7 @@ namespace Logica.Services
                 };
 
                 var createdUser = await _userRepository.AddAsync(user);
-                _logger.LogInformation("Nuevo shopper registrado: {Email} (ID: {UserId})", user.Email, user.Id);
+                _logger.LogInformation("New shopper registered: {Email} (ID: {UserId})", user.Email, user.Id);
 
                 var token = _tokenService.CreateToken(createdUser);
                 var response = new AuthResponse(createdUser.Id, createdUser.Email, createdUser.Username, createdUser.Role.ToString(), token);
@@ -61,8 +63,8 @@ namespace Logica.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error durante el registro del shopper con email: {Email}", request.Email);
-                return (null, "Ocurrió un error durante el registro. Por favor, inténtelo de nuevo.");
+                _logger.LogError(ex, "Error during shopper registration with email: {Email}", request.Email);
+                return (null, "An error occurred during registration. Please try again.");
             }
         }
 
@@ -73,20 +75,20 @@ namespace Logica.Services
                 // Validate role
                 if (!Enum.TryParse<Role>(request.Role, true, out var role) || role != Role.Employee)
                 {
-                    return (null, "Rol inválido especificado. Solo se puede crear el rol de Empleado.");
+                    return (null, "Invalid role specified. Only Employee role can be created.");
                 }
 
                 // Validate input
                 if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
                 {
-                    return (null, "Todos los campos son requeridos.");
+                    return (null, "All fields are required.");
                 }
 
                 // Check if user already exists
                 if (await _userRepository.EmailExistsAsync(request.Email) || await _userRepository.UsernameExistsAsync(request.Username))
                 {
-                    _logger.LogWarning("Intento de registro por admin con email o nombre de usuario existente: {Email}/{Username}", request.Email, request.Username);
-                    return (null, "El email o nombre de usuario ya existe.");
+                    _logger.LogWarning("Admin registration attempt with existing email or username: {Email}/{Username}", request.Email, request.Username);
+                    return (null, "Email or username already exists.");
                 }
 
                 var user = new User
@@ -101,7 +103,7 @@ namespace Logica.Services
                 };
 
                 var createdUser = await _userRepository.AddAsync(user);
-                _logger.LogInformation("Nuevo empleado creado por admin: {Email} (ID: {UserId})", user.Email, user.Id);
+                _logger.LogInformation("New employee created by admin: {Email} (ID: {UserId})", user.Email, user.Id);
 
                 var token = _tokenService.CreateToken(createdUser);
                 var response = new AuthResponse(createdUser.Id, createdUser.Email, createdUser.Username, createdUser.Role.ToString(), token);
@@ -109,8 +111,8 @@ namespace Logica.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error durante el registro por admin para email: {Email}", request.Email);
-                return (null, "Ocurrió un error durante el registro. Por favor, inténtelo de nuevo.");
+                _logger.LogError(ex, "Error during admin registration for email: {Email}", request.Email);
+                return (null, "An error occurred during registration. Please try again.");
             }
         }
 
@@ -121,8 +123,8 @@ namespace Logica.Services
                 // AC #1: Login user with valid role - Validate input
                 if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
                 {
-                    _logger.LogWarning("Intento de inicio de sesión con email o contraseña faltantes");
-                    return (null, "Se requieren email y contraseña.");
+                    _logger.LogWarning("Login attempt with missing email or password");
+                    return (null, "Email and password are required.");
                 }
 
                 // AC #1: Find user by email
@@ -131,22 +133,22 @@ namespace Logica.Services
                 // AC #3: Invalid login - User not found or password incorrect
                 if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
                 {
-                    _logger.LogWarning("Error en el intento de inicio de sesión para el email: {Email} - Credenciales inválidas", request.Email);
-                    return (null, "Email o contraseña incorrectos.");
+                    _logger.LogWarning("Failed login attempt for email: {Email} - Invalid credentials", request.Email);
+                    return (null, "Incorrect email or password.");
                 }
 
                 // AC #1: Check if user is active and has valid role
                 if (!user.IsActive)
                 {
-                    _logger.LogWarning("Intento de inicio de sesión para un usuario inactivo: {Email}", request.Email);
-                    return (null, "La cuenta está inactiva. Por favor, contacte al soporte.");
+                    _logger.LogWarning("Login attempt for inactive user: {Email}", request.Email);
+                    return (null, "Account is inactive. Please contact support.");
                 }
 
                 // Validate role exists and is valid
                 if (!Enum.IsDefined(typeof(Role), user.Role))
                 {
-                    _logger.LogWarning("Intento de inicio de sesión para un usuario con rol inválido: {Email}, Rol: {Role}", request.Email, user.Role);
-                    return (null, "La cuenta tiene un rol inválido. Por favor, contacte al soporte.");
+                    _logger.LogWarning("Login attempt for user with invalid role: {Email}, Role: {Role}", request.Email, user.Role);
+                    return (null, "Account has an invalid role. Please contact support.");
                 }
 
                 // AC #1: User successfully logs in - Update last login
@@ -171,7 +173,7 @@ namespace Logica.Services
                 };
                 await _userRepository.CreateSessionAsync(session);
 
-                _logger.LogInformation("Inicio de sesión exitoso para el usuario: {Email} (ID: {UserId}), Rol: {Role}, Sesión: {SessionId}", 
+                _logger.LogInformation("Successful login for user: {Email} (ID: {UserId}), Role: {Role}, Session: {SessionId}", 
                     user.Email, user.Id, user.Role, session.Id);
 
                 var response = new AuthResponse(user.Id, user.Email, user.Username, user.Role.ToString(), tokenString);
@@ -179,8 +181,8 @@ namespace Logica.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error durante el inicio de sesión para el email: {Email}", request.Email);
-                return (null, "Ocurrió un error durante el inicio de sesión. Por favor, inténtelo de nuevo.");
+                _logger.LogError(ex, "Error during login for email: {Email}", request.Email);
+                return (null, "An error occurred during login. Please try again.");
             }
         }
 
@@ -192,8 +194,8 @@ namespace Logica.Services
                 var jtiClaim = userPrincipal.FindFirst(JwtRegisteredClaimNames.Jti);
                 if (jtiClaim == null)
                 {
-                    _logger.LogWarning("Intento de cierre de sesión con token inválido - sin reclamo JTI");
-                    return (false, "Formato de token inválido.");
+                    _logger.LogWarning("Logout attempt with invalid token - no JTI claim");
+                    return (false, "Invalid token format.");
                 }
 
                 var jti = jtiClaim.Value;
@@ -205,8 +207,8 @@ namespace Logica.Services
 
                 if (activeSession == null)
                 {
-                    _logger.LogWarning("Intento de cierre de sesión para una sesión inexistente o inactiva. JTI: {JTI}, Usuario: {UserId}", jti, userId);
-                    return (false, "No se encontró una sesión activa. El usuario puede que ya haya cerrado sesión.");
+                    _logger.LogWarning("Logout attempt for non-existent or inactive session. JTI: {JTI}, User: {UserId}", jti, userId);
+                    return (false, "No active session found. User may already be logged out.");
                 }
 
                 // AC #1: User successfully logs out - Close the session
@@ -214,14 +216,14 @@ namespace Logica.Services
                 activeSession.ClosedAt = DateTime.UtcNow;
                 await _userRepository.UpdateSessionAsync(activeSession);
 
-                _logger.LogInformation("Cierre de sesión exitoso para el usuario: {UserId}, Sesión: {SessionId}", activeSession.UserId, activeSession.Id);
+                _logger.LogInformation("Successful logout for user: {UserId}, Session: {SessionId}", activeSession.UserId, activeSession.Id);
 
                 return (true, null);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error durante el cierre de sesión");
-                return (false, "Ocurrió un error durante el cierre de sesión. Por favor, inténtelo de nuevo.");
+                _logger.LogError(ex, "Error during logout");
+                return (false, "An error occurred during logout. Please try again.");
             }
         }
 
@@ -234,7 +236,7 @@ namespace Logica.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al obtener la sesión activa para JTI: {JTI}", jti);
+                _logger.LogError(ex, "Error getting active session for JTI: {JTI}", jti);
                 return null;
             }
         }

@@ -1,5 +1,7 @@
 using Data.Entities;
-using Logica.Models;
+using Logica.Models.Auth.Create;
+using Logica.Models.Auth.Login;
+using Logica.Models.Auth.Reponse;
 using System.Security.Claims;
 using System.Threading.Tasks;
 

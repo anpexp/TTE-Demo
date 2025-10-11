@@ -1,4 +1,5 @@
-﻿using Logica.Models.Reviews;
+﻿using Logica.Models.Review.Requests;
+using Logica.Models.Review.Responses;
 
 namespace Logica.Interfaces
 {

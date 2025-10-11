@@ -1,5 +1,7 @@
 using Logica.Interfaces;
-using Logica.Models;
+using Logica.Models.Auth.Create;
+using Logica.Models.Auth.Login;
+using Logica.Models.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
@@ -21,17 +23,17 @@ namespace TechTrendEmporium.Api.Controllers
             _logger = logger;
         }
 
-        //IA debug de token - Endpoint temporal para diagnosticar JWT (REMOVER EN PRODUCCIÓN)
+        // JWT Debug Endpoint - Temporary endpoint for JWT diagnostics (REMOVE IN PRODUCTION)
         [HttpGet("debug/jwt")]
         public IActionResult DebugJwt()
         {
-            //IA debug de token - Buscar la clave JWT en múltiples ubicaciones para compatibilidad con Azure
+            // JWT Debug - Search for JWT key in multiple locations for Azure compatibility
             var jwtKey = _configuration["Jwt:Key"] 
                       ?? _configuration["Jwt_Key"] 
                       ?? Environment.GetEnvironmentVariable("Jwt_Key")
                       ?? Environment.GetEnvironmentVariable("Jwt__Key");
 
-            //IA debug de token - Retornar información de diagnóstico
+            // JWT Debug - Return diagnostic information
             return Ok(new 
             { 
                 jwtKeyFound = !string.IsNullOrWhiteSpace(jwtKey),
@@ -40,7 +42,7 @@ namespace TechTrendEmporium.Api.Controllers
                 siteName = Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME")
             });
         }
-        //IA debug de token - FIN del endpoint de diagnóstico
+        // JWT Debug - END of diagnostic endpoint
 
         /// <summary>
         /// AC #1: Register new shopper account

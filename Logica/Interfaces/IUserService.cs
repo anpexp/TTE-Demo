@@ -1,6 +1,8 @@
 using Data.Entities;
 using Data.Entities.Enums;
-using Logica.Models;
+using Logica.Models.Auth;
+using Logica.Models.Auth.Create;
+using Logica.Models.User;
 
 namespace Logica.Interfaces
 {

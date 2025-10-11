@@ -2,7 +2,8 @@ using Data;
 using Data.Entities;
 using Logica.Interfaces;
 using Logica.Mappers;
-using Logica.Models.Reviews;
+using Logica.Models.Review.Responses;
+using Logica.Models.Review.Requests;
 using Microsoft.EntityFrameworkCore;
 
 namespace Logica.Services

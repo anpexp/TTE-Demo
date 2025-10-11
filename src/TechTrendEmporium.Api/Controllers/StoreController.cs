@@ -1,4 +1,5 @@
 ﻿using Logica.Models;
+using Logica.Models.Products;
 using Logica.Services;
 using Microsoft.AspNetCore.Mvc;
 

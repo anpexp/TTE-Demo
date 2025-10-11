@@ -1,5 +1,6 @@
 ﻿using Logica.Interfaces;
-using Logica.Models.Reviews;
+using Logica.Models.Review.Requests;
+using Logica.Models.Review.Responses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;

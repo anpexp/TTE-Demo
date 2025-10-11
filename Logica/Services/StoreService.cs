@@ -2,6 +2,7 @@
 using Data.Entities.Enums;
 using Logica.Mappers;
 using Logica.Models;
+using Logica.Models.Products;
 using Microsoft.EntityFrameworkCore;
 
 namespace Logica.Services

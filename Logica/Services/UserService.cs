@@ -3,7 +3,9 @@ using Data.Entities.Enums;
 using External.FakeStore;
 using Logica.Interfaces;
 using Logica.Mappers;
-using Logica.Models;
+using Logica.Models.Auth;
+using Logica.Models.Auth.Create;
+using Logica.Models.User;
 using System.Text.Json;
 
 namespace Logica.Services

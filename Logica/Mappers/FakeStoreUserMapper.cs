@@ -1,7 +1,7 @@
 using Data.Entities;
 using Data.Entities.Enums;
 using External.FakeStore.Models;
-using Logica.Models;
+using Logica.Models.User;
 using System.Security.Cryptography;
 using System.Text;
 

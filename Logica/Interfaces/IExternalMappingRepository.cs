@@ -12,5 +12,9 @@ namespace Logica.Interfaces
         // Additional methods needed for user sync
         Task<ExternalMapping?> GetByExternalIdAsync(ExternalSource source, string sourceType, string sourceId);
         Task<ExternalMapping> CreateAsync(ExternalMapping mapping);
+        Task<ExternalMapping> CreateOrUpdateAsync(ExternalMapping mapping);
+        
+        // Cleanup methods
+        Task<int> RemoveOrphanedMappingsAsync(ExternalSource source, string sourceType);
     }
 }

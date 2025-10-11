@@ -2,7 +2,7 @@
 using Data.Entities.Enums;
 using External.FakeStore;
 using Logica.Interfaces;
-using Logica.Models;
+using Logica.Models.Auth.Create;
 using Logica.Services;
 using Moq;
 using System;

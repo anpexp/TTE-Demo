@@ -1,5 +1,5 @@
 ﻿using Data.Entities;
-using Logica.Models.Reviews;
+using Logica.Models.Review.Responses;
 
 namespace Logica.Mappers
 {
