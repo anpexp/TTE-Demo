@@ -37,10 +37,9 @@ public class TokenServiceTests
     public void CreateToken_ShouldGenerateValidToken_WithCorrectClaims()
     {
         // Arrange
-        // Create an in-memory configuration with a valid Jwt:Key
         var inMemorySettings = new Dictionary<string, string> {
-            { "Jwt:Key", TestSecretKey }
-        };
+        { "Jwt:Key", TestSecretKey }
+    };
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(inMemorySettings)
             .Build();
@@ -61,19 +60,28 @@ public class TokenServiceTests
         // Assert
         Assert.False(string.IsNullOrWhiteSpace(tokenString));
 
-        // Decode the token to verify its contents
         var handler = new JwtSecurityTokenHandler();
         var decodedToken = handler.ReadJwtToken(tokenString);
 
-        // Verify the signing algorithm
         Assert.Equal(SecurityAlgorithms.HmacSha512, decodedToken.Header.Alg);
 
-        // Verify the claims embedded in the token
-        var claims = decodedToken.Claims.ToDictionary(c => c.Type, c => c.Value);
+        // Find claims safely using LINQ instead of creating a dictionary.
+        var roleClaim = decodedToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role);
+        var nameIdClaim = decodedToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.NameId);
+        var uniqueNameClaim = decodedToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.UniqueName);
+        var jtiClaim = decodedToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Jti);
 
-        Assert.Equal(user.Id.ToString(), claims[JwtRegisteredClaimNames.NameId]);
-        Assert.Equal(user.Username, claims[JwtRegisteredClaimNames.UniqueName]);
-        Assert.Equal(user.Role.ToString(), claims[ClaimTypes.Role]);
-        Assert.True(Guid.TryParse(claims[JwtRegisteredClaimNames.Jti], out _)); // Check that Jti is a valid Guid
+        // Verify that claims exist and have the correct value.
+        Assert.NotNull(roleClaim);
+        Assert.Equal(user.Role.ToString(), roleClaim.Value);
+
+        Assert.NotNull(nameIdClaim);
+        Assert.Equal(user.Id.ToString(), nameIdClaim.Value);
+
+        Assert.NotNull(uniqueNameClaim);
+        Assert.Equal(user.Username, uniqueNameClaim.Value);
+
+        Assert.NotNull(jtiClaim);
+        Assert.True(Guid.TryParse(jtiClaim.Value, out _));
     }
 }
